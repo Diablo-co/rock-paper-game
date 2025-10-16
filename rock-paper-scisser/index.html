@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> rock-paper-scisser</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+
+  // Elements
+  const choicesEl = document.getElementById('choices');
+  const resultText = document.getElementById('resultText');
+  const youScoreEl = document.getElementById('youScore');
+  const compScoreEl = document.getElementById('compScore');
+  const tieScoreEl = document.getElementById('tieScore');
+  const resetBtn = document.getElementById('resetBtn');
+
+  // Score storage
+  const score = { you: 0, comp: 0, tie: 0 };
+  try { const saved = JSON.parse(localStorage.getItem('rps_score')); if (saved) Object.assign(score, saved); } catch (e) { }
+  updateScoreUI();
+
+  function saveScore(){ localStorage.setItem('rps_score', JSON.stringify(score)); }
+
+  function randomChoice(){
+      const arr = ['rock','paper','scissors'];
+      return arr[Math.floor(Math.random()*arr.length)];
+  }
+
+  function decide(user, comp){
+      if (user === comp) return 'Tie';
+      if ((user==='rock' && comp==='scissors')||(user==='paper'&&comp==='rock')||(user==='scissors'&&comp==='paper')) return 'You won';
+      return 'You lose';
+  }
+
+  function formatChoiceLabel(c){ return c.charAt(0).toUpperCase()+c.slice(1); }
+
+  function updateScoreUI(){ youScoreEl.textContent = score.you; compScoreEl.textContent = score.comp; tieScoreEl.textContent = score.tie; }
+
+  function playGame(userChoice){
+      const computerChoice = randomChoice();
+      const result = decide(userChoice, computerChoice);
+
+      if (result === 'Tie') score.tie++;
+      else if (result === 'You won') score.you++;
+      else score.comp++;
+
+      resultText.innerHTML = `<span class="text-slate-300 text-sm">You chose</span> <strong class="mx-2">${formatChoiceLabel(userChoice)}</strong> · <span class="text-slate-300 text-sm">Computer chose</span> <strong class="ml-2">${formatChoiceLabel(computerChoice)}</strong><div class=\"mt-2 text-2xl font-bold\">${result}</div>`;
+      updateScoreUI();
+      saveScore();
+  }
+
+  // Delegated click
+  choicesEl.addEventListener('click', (e)=>{
+      const btn = e.target.closest('button[data-choice]');
+      if (!btn) return;
+      playGame(btn.dataset.choice);
+  });
+
+  // Keyboard support: Enter / Space
+  choicesEl.addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter' || e.key === ' '){
+          const btn = e.target.closest('button[data-choice]');
+          if (!btn) return;
+          e.preventDefault();
+          playGame(btn.dataset.choice);
+      }
+  });
+
+  // Make buttons tabbable for older browsers
+  document.querySelectorAll('button.choice-btn').forEach(b=> b.setAttribute('tabindex','0'));
+
+  // Reset
+  resetBtn.addEventListener('click', ()=>{
+      score.you = 0; score.comp = 0; score.tie = 0; updateScoreUI(); saveScore();
+      resultText.innerHTML = '<p class="text-sm text-slate-300">Scores reset. Make a choice to start</p>';
+  });
+
+});
+</script>
+ 
+</script>
+
+<body>
+    <main class="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-slate-900 to-black text-white">
+        <section class="w-full max-w-2xl bg-slate-800/60 backdrop-blur-md rounded-2xl p-6 shadow-lg">
+            <h1 class="text-2xl sm:text-3xl font-bold text-center mb-4">Rock · Paper · Scissors</h1>
+
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <p class="text-sm text-slate-300 pick-highlight">Pick one:</p>
+                <div id="choices" class="flex gap-3 items-center justify-center">
+                    <button aria-label="Choose Rock" title="Rock" data-choice="rock" class="choice-btn group">
+                        <span class="choice-thumb"><img src="Screenshot 2025-10-16 233206.png" alt="rock" class="choice-img"></span>
+                        <span class="sr-only">Rock</span>
+                    </button>
+
+                    <button aria-label="Choose Paper" title="Paper" data-choice="paper" class="choice-btn group">
+                        <span class="choice-thumb"><img src="Screenshot 2025-10-16 233230.png" alt="paper" class="choice-img"></span>
+                        <span class="sr-only">Paper</span>
+                    </button>
+
+                    <button aria-label="Choose Scissors" title="Scissors" data-choice="scissors" class="choice-btn group">
+                        <span class="choice-thumb"><img src="Screenshot 2025-10-16 233230.png" alt="scissors" class="choice-img"></span>
+                        <span class="sr-only">Scissors</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div id="resultPanel" class="result-panel p-4 rounded-lg bg-white/5 text-center">
+                    <p class="text-sm text-slate-300">Make a choice to start</p>
+                    <p id="resultText" class="mt-2 font-semibold text-lg"></p>
+                </div>
+
+                <div class="p-4 rounded-lg bg-white/5 text-center">
+                    <p class="text-sm text-slate-300">Scoreboard</p>
+                    <div id="score" class="mt-2 flex items-center justify-center gap-6 text-white">
+                        <div class="text-center"><div id="youScore" class="text-2xl font-bold">0</div><div class="text-xs text-slate-300">You</div></div>
+                        <div class="text-center"><div id="tieScore" class="text-2xl font-bold">0</div><div class="text-xs text-slate-300">Ties</div></div>
+                        <div class="text-center"><div id="compScore" class="text-2xl font-bold">0</div><div class="text-xs text-slate-300">Computer</div></div>
+                    </div>
+                    <div class="mt-3">
+                        <button id="resetBtn" class="reset-btn" aria-label="Reset scores">Reset Scores</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 text-center text-xs text-slate-400">Tip: use keyboard (Tab + Enter/Space) to choose. Hover or focus buttons for effects.</div>
+        </section>
+    </main>
+
+</body>
+
+
+
+</html>
